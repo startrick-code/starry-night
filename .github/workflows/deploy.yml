@@ -1,0 +1,42 @@
+name: Publish Starry Night V1.2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'v12-static.zip'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract existing production build
+        run: |
+          unzip -tq v12-static.zip
+          mkdir -p _site
+          unzip -q v12-static.zip -d _site
+          test -f _site/index.html
+          test -d _site/assets
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
